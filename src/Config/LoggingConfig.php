@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Chiron\Monolog\Config;
 
+use Chiron\Config\AbstractInjectableConfig;
+
 use Nette\Schema\Expect;
 use Nette\Schema\Schema;
 

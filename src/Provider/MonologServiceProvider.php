@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Chiron\Provider;
+namespace Chiron\Monolog\Provider;
 
 use Chiron\Bootload\ServiceProvider\ServiceProviderInterface;
 use Chiron\Container\BindingInterface;
@@ -11,8 +11,8 @@ use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
-use Chiron\Logger\LoggerManager;
-use Chiron\Logger\MonologFactory;
+use Chiron\Monolog\LoggerManager;
+use Chiron\Monolog\MonologFactory;
 
 
 class MonologServiceProvider implements ServiceProviderInterface
