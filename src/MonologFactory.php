@@ -20,7 +20,7 @@ use Monolog\Logger as Monolog;
 use Psr\Log\LoggerInterface;
 use Throwable;
 use Chiron\Container\Container;
-use Chiron\Monolog\Config\LoggingConfig;
+use Chiron\Monolog\Config\MonologConfig;
 
 //https://laravel.com/docs/7.x/logging
 
@@ -69,7 +69,7 @@ final class MonologFactory
      * @param \Illuminate\Contracts\Foundation\Application $app
      */
     // TODO : remplacer le container par un FactoryInterface !!!!
-    public function __construct(Container $container, LoggingConfig $config)
+    public function __construct(Container $container, MonologConfig $config)
     {
         //$this->app = $app;
         $this->container = $container;

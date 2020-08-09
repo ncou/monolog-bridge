@@ -9,9 +9,9 @@ use Chiron\Config\AbstractInjectableConfig;
 use Nette\Schema\Expect;
 use Nette\Schema\Schema;
 
-final class LoggingConfig extends AbstractInjectableConfig
+final class MonologConfig extends AbstractInjectableConfig
 {
-    protected const CONFIG_SECTION_NAME = 'logging';
+    protected const CONFIG_SECTION_NAME = 'monolog';
 
     protected function getConfigSchema(): Schema
     {

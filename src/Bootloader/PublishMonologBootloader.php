@@ -12,6 +12,6 @@ final class PublishMonologBootloader extends AbstractBootloader
     {
         $configPath = __DIR__ . '/../../../config';
 
-        $publishable->add($configPath . '/logging.php.dist', $directories->get('@config/logging.php'));
+        $publishable->add($configPath . '/monolog.php.dist', $directories->get('@config/monolog.php'));
     }
 }
