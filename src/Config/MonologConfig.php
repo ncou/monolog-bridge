@@ -17,8 +17,8 @@ final class MonologConfig extends AbstractInjectableConfig
     {
         // TODO : il faudrait vérifier qu'il n'y a pas de doublons dans le nom des channels !!!! ou alors dans ce cas ils sont fusionné automatiquement lorsqu'on va récupérer le schema ????
         return Expect::structure([
-            'default'       => Expect::string(),
-            'channels'         => Expect::array(), // TODO : structure à finir de coder !!!! c'est un code temporaire pour permettre d'avancer sur les développements.
+            'default'  => Expect::string(),
+            'channels' => Expect::array(), // TODO : structure à finir de coder !!!! c'est un code temporaire pour permettre d'avancer sur les développements.
         ]);
     }
 

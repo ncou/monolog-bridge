@@ -22,11 +22,13 @@ use Throwable;
 use Chiron\Container\SingletonInterface;
 
 // TODO : créer une facade pour le LoggerManager ?????
+// TODO : renommer toutes les méthodes en enlevant la partie "logger", cad avoir uniqumenet des méthode (add() / get() / has())
 final class LoggerManager
 {
     /** @var array */
     private $channels = [];
 
+    // TODO : voir si ce constructeur est encore nécessaire !!!! sinon le virer !!!
     public function __construct(array $channels)
     {
         $this->channels = $channels;
@@ -40,8 +42,10 @@ final class LoggerManager
      *
      * @throws \InvalidArgumentException
      */
+    // TODO : renommer cette méthode addLogger en addChannel() !!!!
     public function addLogger(string $channel, LoggerInterface $logger): void
     {
+        // TODO : utiliser la méthode hasLogger()
         if (isset($this->channels[$channel])) {
             throw new InvalidArgumentException(sprintf('Logger channel "%s" already exists.', $channel));
         }
@@ -56,6 +60,7 @@ final class LoggerManager
      *
      * @return bool
      */
+    // TODO : renommer cette méthode hasLogger en hasChannel() !!!!
     public function hasLogger(string $channel): bool
     {
         return isset($this->channels[$channel]);
@@ -70,6 +75,8 @@ final class LoggerManager
      *
      * @throws \InvalidArgumentException
      */
+    // TODO : créer une méthode getDefaultLogger qui utilise par défaut un channel = 'default', et dans ce cas rendre la paramétre $channel de la méthode getLogger obligatoire et surtout sans valeur par défaut.
+    // TODO : renommer cette méthode getLogger en getChannel() !!!!
     public function getLogger(string $channel = 'default'): LoggerInterface
     {
         if (! $this->hasLogger($channel)) {

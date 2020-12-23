@@ -26,6 +26,8 @@ use Chiron\Monolog\Config\MonologConfig;
 
 //https://github.com/laravel/framework/blob/6121a522c1830542f0b1783847894e48d7187c54/src/Illuminate/Log/LogManager.php
 
+//https://github.com/spiral/monolog-bridge/blob/master/src/LogFactory.php
+
 // AUTRE EXEMPLE DE FACTORY
 //https://github.com/orasik/monolog-middleware/blob/master/src/MonologMiddleware/Extension/MonologConfigurationExtension.php#L104
 
@@ -151,14 +153,11 @@ final class MonologFactory
 
             return $this->channels[$name] = $this->resolve($name);
         } catch (Throwable $e) {
+
+            // TODO : il faudrait plutot lever une ConfigException (faire : throw new ConfigException($e->getMessage(), $e->getCode(), $e);) et virer la méthode createEmergencyLogger, et le paramétre de classe $this->storagePath [et aussi l'enlever du constructeur] !!!!
+
             $logger = $this->createEmergencyLogger();
             $logger->emergency('Unable to create configured logger. Using emergency logger.', ['exception' => $e]);
-
-
-            // TODO : c'est un test, code à virer !!!!
-            throw $e;
-
-
         }
     }
 
@@ -196,7 +195,7 @@ final class MonologFactory
         if (isset($this->customCreators[$config['driver']])) {
             return $this->callCustomCreator($config);
         }
-        $driverMethod = 'create' . ucfirst($config['driver']) . 'Driver';
+        $driverMethod = 'create' . ucfirst($config['driver']) . 'Driver'; // TODO : utiliser plutot un switch/case{} pour appeller les X méthodes createXXXXDriver de cette classe ????
         if (method_exists($this, $driverMethod)) {
             return $this->{$driverMethod}($config);
         }
