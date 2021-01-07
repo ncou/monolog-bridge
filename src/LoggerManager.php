@@ -23,6 +23,7 @@ use Chiron\Container\SingletonInterface;
 
 // TODO : créer une facade pour le LoggerManager ?????
 // TODO : renommer toutes les méthodes en enlevant la partie "logger", cad avoir uniqumenet des méthode (add() / get() / has())
+// TODO : déplacer dans le package chiron/logger ????
 final class LoggerManager
 {
     /** @var array */
