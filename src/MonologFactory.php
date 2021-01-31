@@ -19,8 +19,10 @@ use Monolog\Handler\WhatFailureGroupHandler;
 use Monolog\Logger as Monolog;
 use Psr\Log\LoggerInterface;
 use Throwable;
-use Chiron\Container\Container;
+use Chiron\Container\FactoryInterface;
 use Chiron\Monolog\Config\MonologConfig;
+
+//https://github.com/symfony/monolog-bundle/blob/master/DependencyInjection/MonologExtension.php#L398
 
 //https://laravel.com/docs/7.x/logging
 
@@ -32,6 +34,7 @@ use Chiron\Monolog\Config\MonologConfig;
 //https://github.com/orasik/monolog-middleware/blob/master/src/MonologMiddleware/Extension/MonologConfigurationExtension.php#L104
 
 // TODO : Renommer cette classe en MonologFacory ou LoggerFactory au choix. Et créer une classe de manager mais qui correspond à un de ces deux exemples : https://github.com/merorafael/yii2-monolog/blob/master/src/Mero/Monolog/MonologComponent.php (pour avoir des méthodes du type hasLogger ou close/openChannel) ou alors cette exemple avec une recherche dans le container pour récupérer le channel correspondant :     https://github.com/contributte/monolog/blob/7202b4f785c512fd983c9ccaf0204da1fa5e3638/src/LoggerManager.php.       Dans le principe il faudrait que la classe Manager prenne en paramétre un objet de type Factory qui prendait en paramétre un LoggingConfig et un FactoryInterface.    =>   new LoggerManager(new MonologFactory(LoggingConfig $config, FactoryInterface $factory)).  ca permettra de charger à la volée les channels une fois que l'utilisateur essaye de le récupérer via la méthode getChannel. Mais on pourrait aussi construire tous les channels dans un tableau et le passer en constructeur de la classe LoggerManager(array $channels).
+// TODO : renommer la classe en MonologResolver et créer une méthode resolve() our resolveChannels() qui prendre en entrée un tableau de channels !!!
 final class MonologFactory
 {
     use ParsesLogConfiguration;
@@ -48,7 +51,7 @@ final class MonologFactory
      *
      * @var array
      */
-    private $channels = [];
+    private $cache = [];
 
     /**
      * The registered custom driver creators.
@@ -56,39 +59,34 @@ final class MonologFactory
      * @var array
      */
     // TODO : à virer ????
-    private $customCreators = [];
+    //private $customCreators = [];
 
-    // TODO : solution temporaire faire mieux que ca en terme de code !!!!
-    private $conf = [];
+    private $channels;
 
-    private $container;
+    private $factory;
 
     //private $storagePath;
 
     /**
      * Create a new Log manager instance.
-     *
-     * @param \Illuminate\Contracts\Foundation\Application $app
      */
-    // TODO : remplacer le container par un FactoryInterface !!!!
-    public function __construct(Container $container, MonologConfig $config)
+    public function __construct(FactoryInterface $factory, MonologConfig $config)
     {
-        //$this->app = $app;
-        $this->container = $container;
-        $this->conf = $config->getData();
-        $this->storagePath = directory('@runtime/logs/chiron.log');
+        $this->factory = $factory;
+        $this->channels = $config->getChannels();
+        //$this->storagePath = directory('@runtime/logs/chiron.log');
     }
 
     // TODO : méthode temporaire et à améliorer !!!!!
     // la valeur de retour est un tableau de type ['channel_name' => Psr\LoggerInterface]
-    public function getAllChannels(): array
+    public function resolveChannels(): array
     {
 
         // TODO : lever une exception si la valeur du champ défault n'est pas un "channel" qui existe dans le tableau "channels" !!!!
 
-        $result['default'] = $this->get($this->getDefaultDriver());
+        //$result['default'] = $this->get($this->getDefaultDriver());
 
-        foreach ($this->conf['channels'] as $channel => $options) {
+        foreach ($this->channels as $channel => $options) {
             $result[$channel] = $this->get($channel);
         }
 
@@ -106,34 +104,12 @@ final class MonologFactory
      * @return \Psr\Log\LoggerInterface
      */
     // TODO : à virer
+    /*
     public function stack(array $channels, ?string $channel = null): LoggerInterface
     {
         return $this->createStackDriver(compact('channels', 'channel'));
-    }
+    }*/
 
-    /**
-     * Get a log channel instance.
-     *
-     * @param string|null $channel
-     *
-     * @return \Psr\Log\LoggerInterface
-     */
-    public function channel(?string $channel = null): LoggerInterface
-    {
-        return $this->driver($channel);
-    }
-
-    /**
-     * Get a log driver instance.
-     *
-     * @param string|null $driver
-     *
-     * @return \Psr\Log\LoggerInterface
-     */
-    public function driver(?string $driver = null): LoggerInterface
-    {
-        return $this->get($driver ?? $this->getDefaultDriver());
-    }
 
     /**
      * Attempt to get the log from the local cache.
@@ -144,21 +120,26 @@ final class MonologFactory
      */
     private function get(string $name): LoggerInterface
     {
-        try {
-            //return $this->channels[$name] ?? $this->channels[$name] = $this->resolve($name);
+        //try {
+            //return $this->cache[$name] ?? $this->cache[$name] = $this->resolve($name);
 
-            if (isset($this->channels[$name])) {
-                return $this->channels[$name];
+            if (isset($this->cache[$name])) {
+                return $this->cache[$name];
             }
 
-            return $this->channels[$name] = $this->resolve($name);
+            return $this->cache[$name] = $this->resolve($name);
+
+/*
+
         } catch (Throwable $e) {
 
             // TODO : il faudrait plutot lever une ConfigException (faire : throw new ConfigException($e->getMessage(), $e->getCode(), $e);) et virer la méthode createEmergencyLogger, et le paramétre de classe $this->storagePath [et aussi l'enlever du constructeur] !!!!
 
             $logger = $this->createEmergencyLogger();
             $logger->emergency('Unable to create configured logger. Using emergency logger.', ['exception' => $e]);
-        }
+
+            return $logger;
+        }*/
     }
 
     /**
@@ -167,14 +148,15 @@ final class MonologFactory
      * @return \Psr\Log\LoggerInterface
      */
     // TODO : voir si cette méthode doit être conservée !!!!!! il faudrait surement placer la config emergency dans le fichier de config et mettre cette balise en required !!!
+    /*
     private function createEmergencyLogger(): LoggerInterface
     {
         //TODO : virer le storage_path et utiliser : "php://stderr" non ????
         return new Monolog('chiron', $this->prepareHandlers([new StreamHandler(
-            $this->storagePath . '/logs/chiron.log',
+            dirname($this->storagePath) . '/logs/chiron.log',
             $this->level(['level' => 'debug'])
         )]));
-    }
+    }*/
 
     /**
      * Resolve the given log instance by name.
@@ -187,46 +169,18 @@ final class MonologFactory
      */
     private function resolve(string $name): LoggerInterface
     {
-        $config = $this->configurationFor($name);
+        $config = $this->channels[$name];
 
         if (is_null($config)) {
-            throw new InvalidArgumentException("Log [{$name}] is not defined.");
+            throw new InvalidArgumentException("Log [{$name}] is not defined."); // TODO : créer une exception générique dans le package chiron/logging et l'appeller ici ????
         }
-        if (isset($this->customCreators[$config['driver']])) {
-            return $this->callCustomCreator($config);
-        }
+
         $driverMethod = 'create' . ucfirst($config['driver']) . 'Driver'; // TODO : utiliser plutot un switch/case{} pour appeller les X méthodes createXXXXDriver de cette classe ????
         if (method_exists($this, $driverMethod)) {
             return $this->{$driverMethod}($config);
         }
 
         throw new InvalidArgumentException("Driver [{$config['driver']}] is not supported.");
-    }
-
-    /**
-     * Call a custom driver creator.
-     *
-     * @param array $config
-     *
-     * @return mixed
-     */
-    private function callCustomCreator(array $config)
-    {
-        return $this->customCreators[$config['driver']]($config);
-    }
-
-    /**
-     * Create a custom log driver instance.
-     *
-     * @param array $config
-     *
-     * @return \Psr\Log\LoggerInterface
-     */
-    private function createCustomDriver(array $config): LoggerInterface
-    {
-        $factory = is_callable($via = $config['via']) ? $via : $this->container->build($via);
-
-        return $factory($config);
     }
 
     /**
@@ -246,7 +200,7 @@ final class MonologFactory
         $handlers = [];
         foreach ($config['channels'] as $channel) {
             //$handlers[] = $this->channel($channel)->getHandlers();
-            $handlers = array_merge($handlers, $this->channel($channel)->getHandlers());
+            $handlers = array_merge($handlers, $this->get($channel)->getHandlers());
         }
 
         if ($config['ignore_exceptions'] ?? false) {
@@ -383,7 +337,7 @@ final class MonologFactory
         );
 
         return new Monolog($this->parseChannel($config), [$this->prepareHandler(
-            $this->container->build($config['handler'], $with),
+            $this->factory->make($config['handler'], $with),
             $config
         )]);
     }
@@ -395,6 +349,7 @@ final class MonologFactory
      *
      * @return array
      */
+    /*
     private function prepareHandlers(array $handlers): array
     {
         foreach ($handlers as $key => $handler) {
@@ -402,7 +357,7 @@ final class MonologFactory
         }
 
         return $handlers;
-    }
+    }*/
 
     /**
      * Prepare the handler for usage by Monolog.
@@ -417,7 +372,7 @@ final class MonologFactory
         if (! isset($config['formatter'])) {
             $handler->setFormatter($this->formatter());
         } elseif ($config['formatter'] !== 'default') {
-            $handler->setFormatter($this->container->build($config['formatter'], $config['formatter_with'] ?? []));
+            $handler->setFormatter($this->factory->make($config['formatter'], $config['formatter_with'] ?? []));
         }
 
         return $handler;
@@ -443,30 +398,11 @@ final class MonologFactory
      *
      * @return array
      */
+    /*
     private function configurationFor(string $name): array
     {
-        return $this->conf['channels'][$name];
-    }
-
-    /**
-     * Get the default log driver name.
-     *
-     * @return string
-     */
-    public function getDefaultDriver(): string
-    {
-        return $this->conf['default'];
-    }
-
-    /**
-     * Set the default log driver name.
-     *
-     * @param string $name
-     */
-    public function setDefaultDriver(string $name): void
-    {
-        $this->conf['default'] = $name;
-    }
+        return $this->channels[$name];
+    }*/
 
     /**
      * Register a custom driver creator Closure.
@@ -477,12 +413,13 @@ final class MonologFactory
      * @return $this
      */
     // TODO : méthode à virer ????
+    /*
     public function extend(string $driver, Closure $callback): self
     {
         $this->customCreators[$driver] = $callback->bindTo($this, $this);
 
         return $this;
-    }
+    }*/
 
     /**
      * Get fallback log channel name.

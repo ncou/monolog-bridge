@@ -7,21 +7,7 @@ use Monolog\Handler\StreamHandler;
 use Monolog\Handler\SyslogUdpHandler;
 
 return [
-
-    /*
-    |--------------------------------------------------------------------------
-    | Default Log Channel
-    |--------------------------------------------------------------------------
-    |
-    | This option defines the default log channel that gets used when writing
-    | messages to the logs. The name specified in this option should match
-    | one of the channels defined in the "channels" configuration array.
-    |
-    */
-
-// TODO : il faut modifier le fichier .env pour ajouter cette variable !!!!
-    'default' => env('LOG_CHANNEL', 'stack'),
-
+    // TODO : attention le driver "custom" n'existe plus !!!
     /*
     |--------------------------------------------------------------------------
     | Log Channels
@@ -31,14 +17,15 @@ return [
     | the box, Chiron uses the Monolog PHP logging library. This gives
     | you a variety of powerful log handlers / formatters to utilize.
     |
+    | A 'default' channel should be defined !
+    |
     | Available Drivers: "single", "daily", "slack", "syslog",
     |                    "errorlog", "monolog",
     |                    "custom", "stack"
     |
     */
-
     'channels' => [
-        'stack' => [
+        'default' => [
             'driver' => 'stack',
             'channels' => ['single'],
             'ignore_exceptions' => false,
@@ -103,5 +90,4 @@ return [
             'path' => directory('@runtime/logs/chiron.log'),
         ],*/
     ],
-
 ];
