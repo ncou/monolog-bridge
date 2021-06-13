@@ -86,6 +86,10 @@ final class MonologFactory
 
         //$result['default'] = $this->get($this->getDefaultDriver());
 
+
+        //die(var_dump($this->channels));
+
+
         foreach ($this->channels as $channel => $options) {
             $result[$channel] = $this->get($channel);
         }
@@ -199,9 +203,12 @@ final class MonologFactory
 
         $handlers = [];
         foreach ($config['channels'] as $channel) {
-            //$handlers[] = $this->channel($channel)->getHandlers();
+            //$handlers[] = $this->get($channel)->getHandlers();
             $handlers = array_merge($handlers, $this->get($channel)->getHandlers());
         }
+
+
+        //die(var_dump($handlers));
 
         if ($config['ignore_exceptions'] ?? false) {
             $handlers = [new WhatFailureGroupHandler($handlers)];
@@ -217,7 +224,35 @@ final class MonologFactory
      *
      * @return \Psr\Log\LoggerInterface
      */
+    // TODO c'est un test temporaire pour valider le fonctionnement des processors en cours de développement. Code à virer.
     private function createSingleDriver(array $config): LoggerInterface
+    {
+        $logger = new Monolog($this->parseChannel($config), [
+            $this->prepareHandler(
+                new StreamHandler(
+                    $config['path'],
+                    $this->level($config),
+                    $config['bubble'] ?? true,
+                    $config['permission'] ?? null,
+                    $config['locking'] ?? false
+                ),
+                $config
+            ),
+        ]);
+
+        // TODO : test en dur à virer !!!!
+        $handlers = $logger->getHandlers();
+
+        foreach ($handlers as $handler) {
+        //    $handler->pushProcessor($this->factory->make('\Chiron\Monolog\Processor\RequestIdProcessor'));
+        }
+        //---- TODO END
+
+        return $logger;
+    }
+
+
+    private function createSingleDriver_SAVE(array $config): LoggerInterface
     {
         return new Monolog($this->parseChannel($config), [
             $this->prepareHandler(

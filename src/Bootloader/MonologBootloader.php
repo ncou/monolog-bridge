@@ -25,6 +25,8 @@ final class MonologBootloader extends AbstractBootloader
             throw new BootException('Unable to create configured logger.', $e->getCode(), $e);
         }
 
+        //die(var_dump($channels));
+
         foreach ($channels as $channel => $logger) {
             $manager->set($channel, $logger);
         }

@@ -6,7 +6,7 @@ namespace Chiron\Monolog\Bootloader;
 
 use Chiron\Core\Directories;
 use Chiron\Core\Container\Bootloader\AbstractBootloader;
-use Chiron\Core\Publisher;
+use Chiron\Publisher\Publisher;
 
 final class PublishMonologBootloader extends AbstractBootloader
 {
