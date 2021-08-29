@@ -19,8 +19,10 @@ use Monolog\Handler\WhatFailureGroupHandler;
 use Monolog\Logger as Monolog;
 use Psr\Log\LoggerInterface;
 use Throwable;
-use Chiron\Container\FactoryInterface;
+use Chiron\Injector\FactoryInterface;
 use Chiron\Monolog\Config\MonologConfig;
+
+//https://github.com/theorchard/monolog-cascade
 
 //https://github.com/symfony/monolog-bundle/blob/master/DependencyInjection/MonologExtension.php#L398
 
@@ -372,7 +374,7 @@ final class MonologFactory
         );
 
         return new Monolog($this->parseChannel($config), [$this->prepareHandler(
-            $this->factory->make($config['handler'], $with),
+            $this->factory->build($config['handler'], $with),
             $config
         )]);
     }
@@ -407,7 +409,7 @@ final class MonologFactory
         if (! isset($config['formatter'])) {
             $handler->setFormatter($this->formatter());
         } elseif ($config['formatter'] !== 'default') {
-            $handler->setFormatter($this->factory->make($config['formatter'], $config['formatter_with'] ?? []));
+            $handler->setFormatter($this->factory->build($config['formatter'], $config['formatter_with'] ?? []));
         }
 
         return $handler;
